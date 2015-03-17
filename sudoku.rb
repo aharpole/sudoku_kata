@@ -34,16 +34,20 @@ class Board
     square_at(x,y).value
   end
   
+  def values_matching_criteria(&matcher)
+    squares.select(&matcher).map(&:value).reject { |val| val == 0 }
+  end
+  
   def values_in_row(row)
-    squares.select { |square| square.x == row }.map(&:value).reject { |val| val == 0 }
+    values_matching_criteria { |square| square.x == row }
   end
   
   def values_in_column(col)
-    squares.select { |square| square.y == col }.map(&:value).reject { |val| val == 0 }
+    values_matching_criteria { |square| square.y == col }
   end
   
   def values_in_box(box)
-    squares.select { |square| square.box == box }.map(&:value).reject { |val| val == 0 }
+    values_matching_criteria { |square| square.box == box }
   end
   
   def empty_squares
