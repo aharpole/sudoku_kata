@@ -1,14 +1,16 @@
 require 'minitest/autorun'
 class Board
-  attr_reader :squares
   def initialize(value_str)
-    @squares = []
     rows = value_str.scan(/.{9}/)
     rows.each_with_index do |row_str, row|
       row_str.chars.each_with_index do |val, col|
-        squares << Square.new(row+1,col+1,val.to_i,val != '0')
+        squares << Square.new(row+1,col+1,val.to_i)
       end
     end
+  end
+  
+  def squares
+    @squares ||= []
   end
   
   def to_s
@@ -40,6 +42,10 @@ class Board
     squares.select { |square| square.y == col }.map(&:value).reject { |val| val == 0 }
   end
   
+  def values_in_box(box)
+    squares.select { |square| square.box == box }.map(&:value).reject { |val| val == 0 }
+  end
+  
   def empty_squares
     squares.select { |square| square.value == 0 }
   end
@@ -47,9 +53,11 @@ class Board
   def legal_values_for_square(square)
     in_same_row = values_in_row square.x
     in_same_column = values_in_column square.y
-    1.upto(9).select {|val| !(in_same_row + in_same_column).include? val}
+    in_same_box = values_in_box square.box
+    1.upto(9).select {|val| !(in_same_row + in_same_column + in_same_box).include? val}
   end
   
+  # Can only solve sudoku puzzles with a unique solution.
   def solve!
     while empty_squares.any?
       square = empty_squares.detect { |square| legal_values_for_square(square).size == 1 }
@@ -59,17 +67,33 @@ class Board
 end
 
 class Square
-  attr_reader :x, :y, :locked, :value
-  def initialize(x,y,value=nil,locked=false)
-    @x, @y, @value, @locked = x, y, value, locked
-  end
-  
-  def locked?
-    locked
+  attr_reader :x, :y, :value, :box
+  def initialize(x,y,value=nil)
+    @x, @y, @value = x, y, value
   end
   
   def value=(val)
-    @value = val unless locked?
+    @value = val
+  end
+  
+  def box_x
+    case x
+    when 1, 2, 3 then 1
+    when 4, 5, 6 then 2
+    when 7, 8, 9 then 3
+    end
+  end
+  
+  def box_y
+    case y
+    when 1, 2, 3 then 1
+    when 4, 5, 6 then 2
+    when 7, 8, 9 then 3
+    end
+  end
+  
+  def box
+    "#{box_x} #{box_y}"
   end
 end
 
